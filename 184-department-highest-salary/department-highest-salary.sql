@@ -1,10 +1,22 @@
 # Write your MySQL query statement below
-SELECT 
-    d.name  as Department , 
-    e.name as Employee ,
-    e.salary 
-FROM Employee e JOIN Department d ON e.departmentId = d.id  
-WHERE (departmentId, salary) IN 
-        ( Select departmentId, max(Salary) 
-        FROM Employee GROUP BY departmentId)
-
+WITH ranked_employees AS
+ ( SELECT
+     departmentId,
+     name,
+     salary,
+     DENSE_RANK() OVER (
+        PARTITION BY departmentId
+        ORDER BY salary DESC) AS salary_rank
+    FROM 
+      employee
+     )
+ 
+ SELECT
+    d.name AS Department,
+    re.name AS employee,
+    re.salary
+ FROM 
+      ranked_employees re 
+ JOIN 
+      Department d ON re.departmentId = d.Id
+WHERE salary_rank = 1
